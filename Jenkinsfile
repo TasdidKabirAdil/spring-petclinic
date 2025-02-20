@@ -5,18 +5,17 @@ pipeline {
         // Stage 1: Compile and build the project
         stage('Build') {
             steps {
-                sh 'mvn clean package'
+                bat 'mvn clean package'  // Use "bat" for Windows instead of "sh"
             }
         }
 
         // Stage 2: Generate JaCoCo Code Coverage Report
         stage('Code Coverage (JaCoCo)') {
             steps {
-                sh 'mvn test' // Runs tests and generates JaCoCo report
+                bat 'mvn test'  // Use "bat" here too
             }
             post {
                 always {
-                    // Archive the JaCoCo report
                     jacoco(
                         execPattern: '**/target/jacoco.exec',
                         classPattern: '**/target/classes',
@@ -27,8 +26,8 @@ pipeline {
         }
     }
 
-    // Pipeline will trigger every 3 minutes on Thursdays
+    // Schedule every 3 minutes on Thursdays
     triggers {
-        cron('H/3 * * * 4') // Cron syntax: every 3 minutes on Thursdays
+        cron('H/3 * * * 4') 
     }
 }
