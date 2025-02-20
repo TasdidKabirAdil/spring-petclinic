@@ -1,46 +1,34 @@
 pipeline {
     agent any
 
-    tools {
-        maven 'MAVEN'  // Ensure this matches the name configured in Jenkins Global Tool Configuration
-    }
-
     stages {
+        // Stage 1: Compile and build the project
         stage('Build') {
             steps {
-                script {
-                    sh 'mvn clean package'
-                }
+                sh 'mvn clean package'
             }
         }
 
-        stage('Test') {
+        // Stage 2: Generate JaCoCo Code Coverage Report
+        stage('Code Coverage (JaCoCo)') {
             steps {
-                script {
-                    sh 'mvn test'
-                }
+                sh 'mvn test' // Runs tests and generates JaCoCo report
             }
-        }
-
-        stage('Code Coverage') {
-            steps {
-                script {
-                    sh 'mvn jacoco:report'
+            post {
+                always {
+                    // Archive the JaCoCo report
+                    jacoco(
+                        execPattern: '**/target/jacoco.exec',
+                        classPattern: '**/target/classes',
+                        sourcePattern: '**/src/main/java'
+                    )
                 }
             }
         }
     }
 
-    post {
-        always {
-            node('master') {  // Ensuring it runs inside a Jenkins node
-                junit '**/target/surefire-reports/*.xml'
-                archiveArtifacts artifacts: '**/target/*.jar', fingerprint: true
-            }
-        }
-    }
-
+    // Pipeline will trigger every 3 minutes on Thursdays
     triggers {
-        cron('H/3 * * * 4') // Runs every 3 minutes on Thursdays
+        cron('H/3 * * * 4') // Cron syntax: every 3 minutes on Thursdays
     }
 }
