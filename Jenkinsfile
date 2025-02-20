@@ -33,7 +33,7 @@ pipeline {
 
     post {
         always {
-            node {  // Ensuring it runs inside a Jenkins node
+            node('master') {  // Ensuring it runs inside a Jenkins node
                 junit '**/target/surefire-reports/*.xml'
                 archiveArtifacts artifacts: '**/target/*.jar', fingerprint: true
             }
