@@ -1,39 +1,31 @@
 pipeline {
     agent any
 
-    triggers {
-        cron('H/3 * * * 4') // Runs every 3 minutes on Thursdays
-    }
-
-    environment {
-        MAVEN_HOME = tool 'Maven' // Ensure Maven is installed in Jenkins
+    tools {
+        maven 'Maven'  // Ensure this matches the name configured in Jenkins Global Tool Configuration
     }
 
     stages {
-        stage('Checkout') {
-            steps {
-                git 'https://github.com/TasdidKabirAdil/spring-petclinic.git'
-            }
-        }
-
         stage('Build') {
             steps {
-                sh '${MAVEN_HOME}/bin/mvn clean package'
-            }
-            post {
-                success {
-                    archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
+                script {
+                    sh 'mvn clean package'
                 }
             }
         }
 
-        stage('Run Tests with JaCoCo') {
+        stage('Test') {
             steps {
-                sh '${MAVEN_HOME}/bin/mvn test jacoco:report'
+                script {
+                    sh 'mvn test'
+                }
             }
-            post {
-                success {
-                    jacoco execPattern: 'target/jacoco.exec', classPattern: 'target/classes', sourcePattern: 'src/main/java', exclusionPattern: '**/generated/**'
+        }
+
+        stage('Code Coverage') {
+            steps {
+                script {
+                    sh 'mvn jacoco:report'
                 }
             }
         }
@@ -41,8 +33,14 @@ pipeline {
 
     post {
         always {
-            junit 'target/surefire-reports/*.xml'
+            node {  // Ensuring it runs inside a Jenkins node
+                junit '**/target/surefire-reports/*.xml'
+                archiveArtifacts artifacts: '**/target/*.jar', fingerprint: true
+            }
         }
     }
+
+    triggers {
+        cron('H/3 * * * 4') // Runs every 3 minutes on Thursdays
+    }
 }
- 
